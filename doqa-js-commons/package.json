@@ -1,0 +1,41 @@
+{
+  "name": "doqa-js-commons-dev",
+  "version": "0.1.1",
+  "description": "Framework-independent DoQA adapter core",
+  "license": "Apache-2.0",
+  "type": "commonjs",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js"
+    },
+    "./session": {
+      "types": "./dist/session.d.ts",
+      "default": "./dist/session.js"
+    },
+    "./coordinator": {
+      "types": "./dist/coordinator.d.ts",
+      "default": "./dist/coordinator.js"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "build": "tsc && node ../scripts/esm.cjs",
+    "test": "node --test tests/*.test.cjs",
+    "prepack": "npm run build",
+    "lint": "tsc --noEmit"
+  },
+  "dependencies": {
+    "doqa-js-client-dev": "0.1.1"
+  }
+}
