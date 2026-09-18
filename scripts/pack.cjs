@@ -11,7 +11,6 @@ const result = spawnSync(
   [
     process.env.npm_execpath,
     "pack",
-    "--workspaces",
     "--pack-destination",
     destination,
   ],

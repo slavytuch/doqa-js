@@ -25,45 +25,40 @@ try {
     path.join(directory, "package.json"),
     JSON.stringify({ name: "doqa-js-package-check", private: true }),
   );
-  const archives = pkg.workspaces.map((workspace) => {
-    const module = require(path.join(root, workspace, "package.json"));
-    return path.join(
-      root,
-      "release-dist",
-      `${module.name}-${module.version}.tgz`,
-    );
-  });
-  // Resolve Jest from its workspace so the CI matrix's selected version is tested.
-  const jestVersion = require(
-    require.resolve("jest/package.json", {
-      paths: [path.join(root, "doqa-jest")],
-    }),
-  ).version;
+  const archive = path.join(root, "release-dist", `${pkg.name}-${pkg.version}.tgz`);
+  const jestVersion = require("jest/package.json").version;
   run([
     process.env.npm_execpath,
     "install",
     "--ignore-scripts",
     "--no-audit",
     "--no-fund",
-    ...archives,
+    archive,
     `jest@${jestVersion}`,
     `jest-environment-node@${jestVersion}`,
     `jest-environment-jsdom@${jestVersion}`,
     `@jest/test-sequencer@${jestVersion}`,
   ]);
-  for (const workspace of pkg.workspaces) {
-    const module = require(path.join(root, workspace, "package.json"));
-    const location = path.join(directory, "node_modules", module.name);
-    assert.equal(fs.lstatSync(location).isSymbolicLink(), false);
-    assert.equal(
-      JSON.parse(fs.readFileSync(path.join(location, "package.json"))).version,
-      pkg.version,
-    );
-  }
+  const location = path.join(directory, "node_modules", pkg.name);
+  assert.equal(fs.lstatSync(location).isSymbolicLink(), false);
+  const installed = JSON.parse(fs.readFileSync(path.join(location, "package.json")));
+  assert.equal(installed.version, pkg.version);
+  assert.deepEqual(Object.keys(installed.dependencies), ["undici"]);
+  assert.ok(!installed.workspaces);
+  fs.writeFileSync(path.join(directory, "types.cts"), `
+    import { withDoqa, doqa } from 'doqa-js-dev';
+    import { withDoqa as jestConfig } from 'doqa-js-dev/jest';
+    import { Client } from 'doqa-js-dev/client';
+    import { Runtime } from 'doqa-js-dev/commons';
+    import { Coordinator } from 'doqa-js-dev/commons/coordinator';
+    withDoqa({testEnvironment: 'node'}, {reporting: 'files'});
+    void [doqa, jestConfig, Client, Runtime, Coordinator];
+  `);
+  run([require.resolve("typescript/bin/tsc"), "--noEmit", "--module", "Node16", "--target", "ES2022", "--skipLibCheck", "types.cts"]);
   fs.writeFileSync(
     path.join(directory, "jest.config.cjs"),
     `
-    const {withDoqa}=require('doqa-jest-dev');
+    const {withDoqa}=require('doqa-js-dev');
     module.exports=withDoqa({maxWorkers:2,projects:[
       {displayName:'node',testEnvironment:'node',testMatch:['<rootDir>/node.test.cjs','<rootDir>/esm.test.mjs']},
       {displayName:'browser',testEnvironment:'jsdom',testMatch:['<rootDir>/browser.test.cjs']}
@@ -73,20 +68,20 @@ try {
   fs.writeFileSync(
     path.join(directory, "node.test.cjs"),
     `
-    const {doqa}=require('doqa-jest-dev');
+    const {doqa}=require('doqa-js-dev');
     doqa.test('archive CJS',{id:'PACKAGE-CJS'},()=>{
       doqa.step('nested',()=>doqa.attach('proof.txt','installed archives','text/plain'));
-      expect(typeof require('doqa-js-client-dev').Client).toBe('function');
-      expect(typeof require('doqa-js-commons-dev/coordinator').Coordinator).toBe('function');
+      expect(typeof require('doqa-js-dev/client').Client).toBe('function');
+      expect(typeof require('doqa-js-dev/commons/coordinator').Coordinator).toBe('function');
     });
   `,
   );
   fs.writeFileSync(
     path.join(directory, "esm.test.mjs"),
     `
-    import {doqa} from 'doqa-jest-dev';
-    import {Runtime} from 'doqa-js-commons-dev';
-    import {Client} from 'doqa-js-client-dev';
+    import {doqa} from 'doqa-js-dev';
+    import {Runtime} from 'doqa-js-dev/commons';
+    import {Client} from 'doqa-js-dev/client';
     doqa.test('archive ESM',{id:'PACKAGE-ESM'},()=>{
       expect(typeof Runtime).toBe('function'); expect(typeof Client).toBe('function');
     });
@@ -95,7 +90,7 @@ try {
   fs.writeFileSync(
     path.join(directory, "browser.test.cjs"),
     `
-    const {doqa}=require('doqa-jest-dev');
+    const {doqa}=require('doqa-js-dev');
     doqa.test('archive jsdom',{id:'PACKAGE-JSDOM'},()=>{
       document.body.innerHTML='<button>OK</button>';
       expect(document.querySelector('button').textContent).toBe('OK');
@@ -122,7 +117,7 @@ try {
     "installed archives",
   );
   console.log(
-    "Packed client + commons + Jest verified: CJS, ESM, jsdom and attachment contents.",
+    "Single doqa-js-dev archive verified: CJS, ESM, jsdom and attachment contents.",
   );
 } finally {
   fs.rmSync(directory, { recursive: true, force: true });

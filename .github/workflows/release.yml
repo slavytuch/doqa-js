@@ -37,12 +37,6 @@ jobs:
           node-version: "24"
           cache: npm
       - run: npm ci
-      - name: Set source repository metadata for provenance
-        run: |
-          npm pkg set --workspaces repository.type=git "repository.url=git+https://github.com/${GITHUB_REPOSITORY}.git"
-          for workspace in doqa-client doqa-js-commons doqa-jest; do
-            npm pkg set --workspace "$workspace" "repository.directory=$workspace"
-          done
       - name: Pack release
         run: npm run pack
       - run: npm run test:packages
@@ -52,7 +46,7 @@ jobs:
           path: release-dist/*.tgz
           if-no-files-found: error
 
-  publish-client:
+  publish:
     needs: build
     runs-on: ubuntu-latest
     environment: npm
@@ -69,66 +63,16 @@ jobs:
         with:
           name: npm-dist
           path: release-dist/
-      - name: Publish doqa-js-client-dev
+      - name: Publish doqa-js-dev
         run: |
           npm_tag=latest
           if [[ "${GITHUB_REF_NAME#v}" == *-* ]]; then
             npm_tag=next
           fi
-          npm publish "./release-dist/doqa-js-client-dev-${GITHUB_REF_NAME#v}.tgz" --access public --tag "$npm_tag"
-
-  publish-commons:
-    needs: publish-client
-    runs-on: ubuntu-latest
-    environment: npm
-    permissions:
-      id-token: write
-      contents: read
-    steps:
-      - uses: actions/setup-node@v4
-        with:
-          node-version: "24"
-          registry-url: https://registry.npmjs.org
-      - run: npm install --global npm@11
-      - uses: actions/download-artifact@v4
-        with:
-          name: npm-dist
-          path: release-dist/
-      - name: Publish doqa-js-commons-dev
-        run: |
-          npm_tag=latest
-          if [[ "${GITHUB_REF_NAME#v}" == *-* ]]; then
-            npm_tag=next
-          fi
-          npm publish "./release-dist/doqa-js-commons-dev-${GITHUB_REF_NAME#v}.tgz" --access public --tag "$npm_tag"
-
-  publish-jest:
-    needs: publish-commons
-    runs-on: ubuntu-latest
-    environment: npm
-    permissions:
-      id-token: write
-      contents: read
-    steps:
-      - uses: actions/setup-node@v4
-        with:
-          node-version: "24"
-          registry-url: https://registry.npmjs.org
-      - run: npm install --global npm@11
-      - uses: actions/download-artifact@v4
-        with:
-          name: npm-dist
-          path: release-dist/
-      - name: Publish doqa-jest-dev
-        run: |
-          npm_tag=latest
-          if [[ "${GITHUB_REF_NAME#v}" == *-* ]]; then
-            npm_tag=next
-          fi
-          npm publish "./release-dist/doqa-jest-dev-${GITHUB_REF_NAME#v}.tgz" --access public --tag "$npm_tag"
+          npm publish "./release-dist/doqa-js-dev-${GITHUB_REF_NAME#v}.tgz" --access public --tag "$npm_tag"
 
   github-release:
-    needs: publish-jest
+    needs: publish
     runs-on: ubuntu-latest
     permissions:
       contents: write

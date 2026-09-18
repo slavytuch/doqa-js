@@ -4,8 +4,8 @@ const fs = require("node:fs");
 const os = require("node:os");
 const path = require("node:path");
 const { randomUUID } = require("node:crypto");
-const { Runtime, atomic } = require("../dist");
-const { Coordinator } = require("../dist/coordinator");
+const { Runtime, atomic } = require("../../dist/doqa-js-commons/src");
+const { Coordinator } = require("../../dist/doqa-js-commons/src/coordinator");
 
 test("shared runtime and coordinator report a non-Jest framework without Jest globals", async (t) => {
   const directory = fs.mkdtempSync(path.join(os.tmpdir(), "doqa-commons-"));

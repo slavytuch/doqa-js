@@ -1,6 +1,7 @@
-import type { Runtime } from "doqa-js-commons-dev";
+import type { Runtime } from "../../doqa-js-commons/src/index";
 import { bridgeKey, metadataKey, templateKey } from "./bridge";
 import type { Metadata } from "./types";
+import { serializeParameter } from "./parameter";
 
 type TestCallback = (...args: unknown[]) => unknown;
 interface JestTest {
@@ -84,7 +85,7 @@ export const doqa = {
           value:
             typeof value === "string"
               ? value
-              : (JSON.stringify(value) ?? String(value)),
+              : serializeParameter(value),
         },
       ],
     }),

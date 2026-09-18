@@ -1,7 +1,7 @@
 import { join, relative } from "node:path";
 import { randomUUID } from "node:crypto";
-import { atomic, hash } from "doqa-js-commons-dev";
-import { Coordinator } from "doqa-js-commons-dev/coordinator";
+import { atomic, hash } from "../../doqa-js-commons/src/index";
+import { Coordinator } from "../../doqa-js-commons/src/coordinator";
 import type { Options } from "./types";
 
 export default class Reporter {

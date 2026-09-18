@@ -2,7 +2,7 @@ import Sequencer from "@jest/test-sequencer";
 import type { Test } from "@jest/test-result";
 import { relative } from "node:path";
 import { resolveConfig } from "./config";
-import { prepareSession } from "doqa-js-commons-dev/session";
+import { prepareSession } from "../../doqa-js-commons/src/session";
 import type { Options } from "./types";
 export default class PlanSequencer extends Sequencer {
   async sort(tests: Test[]): Promise<Test[]> {

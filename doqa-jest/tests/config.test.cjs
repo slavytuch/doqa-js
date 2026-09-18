@@ -2,7 +2,7 @@ const { test } = require("node:test");
 const assert = require("node:assert/strict");
 
 test("environment plan order also configures the Jest scheduler", () => {
-  const { withDoqa } = require("../dist");
+  const { withDoqa } = require("../../dist/doqa-jest/src");
   const previous = process.env.DOQA_EXECUTION_ORDER;
   process.env.DOQA_EXECUTION_ORDER = "plan";
   try {

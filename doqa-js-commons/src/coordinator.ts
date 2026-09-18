@@ -10,7 +10,7 @@ import type {
   FrameworkInfo,
 } from "./types";
 import { resolveConfig } from "./config";
-import { Client, FormData } from "doqa-js-client-dev";
+import { Client, FormData } from "../../doqa-client/src/index";
 import { prepareSession } from "./session";
 import { atomic, warn } from "./storage";
 import { writeAllure } from "./files";

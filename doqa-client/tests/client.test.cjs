@@ -1,7 +1,7 @@
 const { test } = require("node:test");
 const assert = require("node:assert/strict");
 const http = require("node:http");
-const { Client } = require("../dist");
+const { Client } = require("../../dist/doqa-client/src");
 
 test("safe retries, 429, unsafe POST and redacted errors", async (t) => {
   let status = 503;

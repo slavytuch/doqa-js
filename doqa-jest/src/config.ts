@@ -1,4 +1,4 @@
-import { resolveConfig as resolveCommonConfig } from "doqa-js-commons-dev";
+import { resolveConfig as resolveCommonConfig } from "../../doqa-js-commons/src/index";
 import type { Config, Options } from "./types";
 export function resolveConfig(options: Options = {}): Config {
   const config = resolveCommonConfig(options);

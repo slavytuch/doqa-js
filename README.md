@@ -1,23 +1,41 @@
 # DoQA JavaScript
 
-Общий репозиторий JavaScript-интеграций DoQA. Как в `doqa-java`, API-клиент,
-общее ядро адаптеров и интеграции с тестовыми фреймворками разделены на модули.
-Нужен Node.js 22 или 24. Управление зависимостями — npm workspaces с одним lockfile.
+Единый npm-пакет `doqa-js-dev`: HTTP-клиент DoQA, общее ядро адаптеров и интеграция
+с Jest 29.7/30.x. Требуется Node.js 22 или 24.
 
-| Модуль | npm-пакет на время разработки | Назначение |
+```sh
+npm install --save-dev doqa-js-dev
+```
+
+```js
+const { withDoqa } = require('doqa-js-dev');
+module.exports = withDoqa({ testEnvironment: 'node' }, { reporting: 'files' });
+```
+
+В тестах используйте `const { doqa } = require('doqa-js-dev')` или
+`import { doqa } from 'doqa-js-dev'`. Настройки, шаги, вложения и отправка результатов
+описаны в [руководстве Jest](doqa-jest/README.md).
+
+## Структура
+
+Исходники разделены по назначению, но публикуется **один архив** из корня репозитория.
+Отдельных npm-пакетов и workspaces нет. Client и commons включены в пакет;
+единственная runtime-зависимость — `undici`. Jest задаётся через peer dependencies.
+
+| Каталог исходников | Импорт из единого пакета | Назначение |
 | --- | --- | --- |
-| [doqa-client](doqa-client/README.md) | `doqa-js-client-dev` | HTTP, TLS/proxy, таймауты, повторы, circuit breaker |
-| [doqa-js-commons](doqa-js-commons/README.md) | `doqa-js-commons-dev` | Конфигурация, модель результатов, шаги и вложения, план, Allure, пакетная отправка |
-| [doqa-jest](doqa-jest/README.md) | `doqa-jest-dev` | Jest 29.7/30.x: environment, reporter, sequencer и API разметки |
+| `doqa-client` | `doqa-js-dev/client` | HTTP, TLS/proxy, таймауты и повторы |
+| `doqa-js-commons` | `doqa-js-dev/commons` | Конфигурация, результаты, шаги, вложения и Allure |
+| `doqa-jest` | `doqa-js-dev` или `doqa-js-dev/jest` | Jest environment, reporter, sequencer и разметка |
 
-Зависимости направлены в одну сторону: **Jest → commons → client → undici**.
-В client и commons нет зависимостей от Jest. Корень `doqa-js` имеет `private: true`
-и не публикуется. Все три модуля выпускаются одной версией; внутренние зависимости
-закреплены на точную версию выпуска.
+Доступны также `doqa-js-dev/reporter`, `doqa-js-dev/environment-node`,
+`doqa-js-dev/environment-jsdom`, `doqa-js-dev/sequencer`,
+`doqa-js-dev/commons/coordinator` и `doqa-js-dev/commons/session`.
+Client и commons не зависят от исходников Jest.
 
 ## Сборка и проверки
 
-Все команды выполняются из корня `doqa-js`:
+Из корня репозитория:
 
 ```sh
 npm ci
@@ -28,65 +46,36 @@ npm run pack
 npm run test:packages
 ```
 
-Сборка идёт в порядке client → commons → Jest. `npm test` проверяет HTTP-контракт,
-общее ядро без Jest, а затем реальные дочерние процессы Jest: files/API,
-параметры/retries, workers/concurrent, selection, порядок, hooks, ошибки загрузки,
-CJS/ESM, jsdom и TypeScript. Для API-контракта нужен доступ к loopback-порту.
+Тесты проверяют HTTP-контракт, общее ядро, реальные процессы Jest, CJS/ESM, jsdom,
+TypeScript, параметры, retries, workers, планы, шаги и вложения. Для HTTP-тестов
+нужен доступ к loopback-порту. Проверка архивов устанавливает один пакет в отдельный
+временный проект из npm и проверяет CJS/ESM, jsdom и содержимое вложения.
 
-`npm run pack` создаёт три архива в `release-dist/`. `npm run test:packages`
-устанавливает их вместе с Jest в отдельный временный проект из npm, без workspace-ссылок,
-и проверяет CJS/ESM, jsdom и содержимое вложения. Нужен доступ к npm registry.
-
-Опубликованная версия `doqa-jest-dev@0.1.0` остаётся доступна в npm. Модульная версия
-`0.1.1` готовится к публикации. Пока она не опубликована, для проверки локальной сборки
-в проекте тестов установите **все три** архива из `release-dist/` одной командой:
+`npm run pack` создаёт `release-dist/doqa-js-dev-<версия>.tgz`.
+Для локальной проверки в `doqa-jest-integration-tests`:
 
 ```sh
-npm install --save-dev /path/to/doqa-js/release-dist/*.tgz
+npm install --save-dev ../doqa-js/release-dist/doqa-js-dev-0.1.1.tgz
+npm test
 ```
 
-После публикации пользователю достаточно установить `doqa-jest-dev`: client и commons
-подтянутся транзитивно. Импорты Jest сохраняются: `require('doqa-jest-dev')` и
-`import { doqa, withDoqa } from 'doqa-jest-dev'`.
+## CI и релизы
 
-## CI и Dependabot
+CI проверяет Node.js 22/24 × Jest 29.7/30.x, типы, тесты и установку архива.
+Dependabot предлагает обновления npm и GitHub Actions через PR.
+Лейблы PR: `type:feature`, `type:bug`, `type:docs`, `type:dependencies`,
+`type:internal`, `type:skip-changelog`.
 
-CI работает для push в `main` и PR, проверяет Node.js 22/24 × Jest 29.7/30.x,
-проверку типов, тесты всех модулей и установку собранных архивов.
-Dependabot еженедельно предлагает обновления npm и GitHub Actions через PR;
-зависимости Jest объединяются в одну группу. Автоматического слияния нет.
+Первый выпуск `doqa-js-dev` публикуется вручную из проверенного архива:
 
-Создайте в GitHub лейблы `type:feature`, `type:bug`, `type:docs`,
-`type:dependencies`, `type:internal`, `type:skip-changelog`.
-Один из них обязателен для PR, по ним группируются release notes.
+```sh
+npm publish ./release-dist/doqa-js-dev-0.1.1.tgz --access public --tag latest
+```
 
-## Релизы
-
-Тег `v<версия>` запускает `.github/workflows/release.yml`: проверку единой версии,
-матрицу CI, упаковку и проверку архивов, затем публикацию **client → commons → Jest**.
-После успешной публикации всех модулей создаётся GitHub Release с тремя архивами.
-Суффикс версии, например `0.1.2-rc.1`, выбирает npm-тег `next` и GitHub prerelease;
-обычная версия публикуется с npm-тегом `latest`.
-
-Перед автоматической публикацией:
-
-1. Разместите `doqa-js` в GitHub и создайте GitHub Environment `npm`.
-2. Новые пакеты `doqa-js-client-dev` и `doqa-js-commons-dev` сначала опубликуйте
-   вручную из соответствующих архивов, в указанном порядке, чтобы они появились
-   в вашем npm-аккаунте. Затем можно вручную опубликовать архив Jest того же выпуска.
-   Не отправляйте для уже вручную опубликованной версии релизный тег: npm запрещает
-   повторную публикацию.
-3. Для каждого из трёх пакетов в npm настройте Trusted Publisher: фактический
-   GitHub owner/repository **doqa-js**, workflow **`release.yml`**, environment **`npm`**,
-   с разрешением прямого `npm publish`. Для уже настроенного Jest-пакета укажите новый репозиторий.
-
-Workflow использует OIDC на GitHub-hosted runner, Node.js 24 и npm 11; `NPM_TOKEN`
-не требуется. Поля `repository.url` и `repository.directory` в архивах формируются
-из фактического GitHub-репозитория и каталога каждого модуля. Для публичного репозитория
-npm автоматически добавляет provenance. [Документация npm](https://docs.npmjs.com/trusted-publishers/).
-
-Для следующей версии используйте общую команду, которая обновляет все манифесты,
-внутренние зависимости и lockfile:
+Для следующих автоматических выпусков настройте GitHub Environment `npm` и
+npm Trusted Publisher для пакета `doqa-js-dev`: owner `slavytuch`, repository
+`doqa-js`, workflow `release.yml`, environment `npm` с разрешением прямой публикации.
+Workflow использует OIDC, Node.js 24 и npm 11; `NPM_TOKEN` не требуется.
 
 ```sh
 npm run version:set -- 0.1.2
@@ -98,18 +87,10 @@ git push origin main
 git push origin v0.1.2
 ```
 
-Обычный `npm version` только в одном модуле не подходит: проверка единой версии
-отклонит такой релиз. Публикация начинается после отправки тега. Если отдельный job
-публикации упал, исправьте причину и повторите только неуспешные jobs: успешно
-опубликованные версии повторно отправлять нельзя.
-
-## Добавление адаптера
-
-Добавьте workspace в корневой `package.json` после его зависимостей. Новый адаптер
-использует типы результатов, `Runtime` и `Coordinator` из commons, а сам переводит
-события своего фреймворка в общую модель. Передайте в coordinator собственные
-`name`, `language`, `displayName`, чтобы отчёты не маркировались как Jest.
-Добавьте тесты, включите его пакет в проверку архивов и порядок публикации.
+Тег запускает CI, упаковку, проверку одного архива, публикацию и GitHub Release.
+Обычная версия получает npm-тег `latest`, версия с суффиксом — `next` и GitHub prerelease.
+Не отправляйте релизный тег для уже опубликованной вручную версии: npm запрещает
+повторную публикацию той же версии.
 
 ## Лицензия
 

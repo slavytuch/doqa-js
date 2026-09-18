@@ -1,6 +1,6 @@
 # DoQA JavaScript API client
 
-Модуль `doqa-client`, npm-пакет разработки `doqa-js-client-dev`.
+Модуль `doqa-client`, часть единого npm-пакета `doqa-js-dev` с импортом `doqa-js-dev/client`.
 Не зависит от Jest и общего ядра адаптеров.
 
 `Client` отправляет запросы в `/api/autotests/`, добавляет token/space_id,
@@ -10,7 +10,7 @@
 токен и тело ответа. После использования нужно вызвать `await client.close()`.
 
 ```js
-const { Client } = require('doqa-js-client-dev');
+const { Client } = require('doqa-js-dev/client');
 const client = new Client({
   url: process.env.DOQA_URL,
   token: process.env.DOQA_TOKEN,
@@ -28,4 +28,4 @@ try {
 
 Пример вызывается внутри async-функции. Node.js 22/24, CJS/ESM и типы TypeScript.
 Сборка и тесты выполняются из корня `doqa-js`: `npm run build`, затем
-`npm run test --workspace doqa-client`. Релизная версия общая для всех модулей.
+`node --test doqa-client/tests/*.test.cjs`. Публикация выполняется из корня единым пакетом.

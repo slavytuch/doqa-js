@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { randomUUID } from "node:crypto";
-import { Client } from "doqa-js-client-dev";
+import { Client } from "../../doqa-client/src/index";
 import type { Config, Session, PlanItem } from "./types";
 import { atomic, warn } from "./storage";
 

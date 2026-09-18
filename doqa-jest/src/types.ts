@@ -1,7 +1,7 @@
 import type {
   Options as CommonOptions,
   Config as CommonConfig,
-} from "doqa-js-commons-dev";
+} from "../../doqa-js-commons/src/index";
 export type {
   Metadata,
   Parameter,
@@ -9,7 +9,7 @@ export type {
   RecordResult,
   Session,
   Step,
-} from "doqa-js-commons-dev";
+} from "../../doqa-js-commons/src/index";
 export interface Options extends Omit<CommonOptions, "executionOrder"> {
   executionOrder?: "jest" | "plan";
 }

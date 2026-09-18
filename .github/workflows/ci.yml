@@ -30,7 +30,7 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm run version:check
-      - run: npm install --no-save --workspace doqa-jest jest@${{ matrix.jest }} jest-environment-node@${{ matrix.jest }} jest-environment-jsdom@${{ matrix.jest }} @jest/test-sequencer@${{ matrix.jest }}
+      - run: npm install --no-save jest@${{ matrix.jest }} jest-environment-node@${{ matrix.jest }} jest-environment-jsdom@${{ matrix.jest }} @jest/test-sequencer@${{ matrix.jest }}
       - run: npm run lint
       - run: npm test
       - run: npm run pack

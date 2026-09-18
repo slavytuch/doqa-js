@@ -6,11 +6,11 @@
 
 ## Установка и подключение
 
-Имя npm-пакета на время разработки — `doqa-jest-dev`; модуль `doqa-jest` в репозитории `doqa-js`.
+Имя npm-пакета на время разработки — `doqa-js-dev`; модуль `doqa-jest` в репозитории `doqa-js`.
 Опубликованную версию можно установить из npm:
 
 ```sh
-npm install --save-dev doqa-jest-dev
+npm install --save-dev doqa-js-dev
 ```
 
 Для проверки локальной сборки из корня `doqa-js`:
@@ -21,21 +21,21 @@ npm test
 npm run pack
 ```
 
-В тестовом проекте установить все три архива одной версии (client, commons, Jest):
+В тестовом проекте установите единый архив:
 
 ```sh
-npm install --save-dev /path/to/doqa-js/release-dist/*.tgz
+npm install --save-dev /path/to/doqa-js/release-dist/doqa-js-dev-0.1.1.tgz
 ```
 
 ```js
 // jest.config.cjs
-const {withDoqa} = require('doqa-jest-dev');
+const {withDoqa} = require('doqa-js-dev');
 module.exports = withDoqa({testEnvironment: 'node'});
 ```
 
 Для браузерных тестов указать `jsdom` и установить `jest-environment-jsdom`
 той же версии, что Jest. Существующие transforms TypeScript, reporters и hooks сохраняются.
-ESM-конфигурация использует `import {withDoqa} from 'doqa-jest-dev'`.
+ESM-конфигурация использует `import {withDoqa} from 'doqa-js-dev'`.
 ESM-тесты запускаются с необходимыми самой версии Jest флагами VM modules.
 
 Без credentials адаптер пишет Allure-совместимые файлы в `results/`.
@@ -46,7 +46,7 @@ ESM-тесты запускаются с необходимыми самой в�
 ## Разметка
 
 ```js
-const {doqa} = require('doqa-jest-dev');
+const {doqa} = require('doqa-js-dev');
 
 doqa.test('создание заявки', {
   id: 'REQUEST-CREATE',
@@ -155,7 +155,7 @@ Allure-файлы сохраняются также при API-доставке.
 
 Для собственного environment экспортировать `wrapEnvironment(YourEnvironment)`
 и подключить его через `withDoqa`. Docblock `@jest-environment` должен ссылаться
-на обёрнутую среду (`doqa-jest-dev/environment-node` или `doqa-jest-dev/environment-jsdom`).
+на обёрнутую среду (`doqa-js-dev/environment-node` или `doqa-js-dev/environment-jsdom`).
 Строковые `projects` следует заменить объектными конфигурациями с `withDoqa`.
 Watch-режим не входит в первую версию; использовать отдельный процесс Jest на прогон.
 Генераторные callbacks не входят в поддерживаемую матрицу.
@@ -170,6 +170,6 @@ hooks, ошибки загрузки, CJS/ESM, jsdom и TypeScript transform. Н
 
 ## CI и релизы
 
-Настройка CI, Dependabot, общей версии и последовательной публикации трёх модулей
-описана в [README doqa-js](../README.md#релизы). Пользовательский API Jest и имя
-пакета `doqa-jest-dev` сохраняются при переходе на модульную версию.
+Настройка CI, Dependabot и публикации единого пакета описана в
+[README doqa-js](../README.md#ci-и-релизы). При переходе с прежнего пакета
+замените импорты `doqa-jest-dev` на `doqa-js-dev`; API Jest сохраняется.

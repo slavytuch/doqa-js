@@ -5,7 +5,7 @@ const os = require("node:os");
 const path = require("node:path");
 const { spawn } = require("node:child_process");
 const http = require("node:http");
-const root = path.resolve(__dirname, "..");
+const root = path.resolve(__dirname, "../../dist/doqa-jest");
 const jest = require.resolve("jest/bin/jest");
 
 async function run(t, sources, options = {}, config = {}) {
@@ -15,7 +15,7 @@ async function run(t, sources, options = {}, config = {}) {
     fs.writeFileSync(path.join(dir, file), source);
   fs.writeFileSync(
     path.join(dir, "jest.config.cjs"),
-    `const {withDoqa}=require(${JSON.stringify(root + "/dist")});module.exports=withDoqa(${JSON.stringify({ rootDir: dir, testMatch: ["**/*.test.cjs", "**/*.test.mjs"], maxWorkers: 2, ...config })},${JSON.stringify({ reporting: "files", resultsDir: path.join(dir, "results"), ...options })});`,
+    `const {withDoqa}=require(${JSON.stringify(root + "/src")});module.exports=withDoqa(${JSON.stringify({ rootDir: dir, testMatch: ["**/*.test.cjs", "**/*.test.mjs"], maxWorkers: 2, ...config })},${JSON.stringify({ reporting: "files", resultsDir: path.join(dir, "results"), ...options })});`,
   );
   const env = { ...process.env, NODE_OPTIONS: "--experimental-vm-modules" };
   delete env.NODE_TEST_CONTEXT;
@@ -44,7 +44,7 @@ async function run(t, sources, options = {}, config = {}) {
     : [];
   return { ...processResult, dir, results, sessions };
 }
-const api = `const {doqa}=require(${JSON.stringify(root + "/dist")});\n`;
+const api = `const {doqa}=require(${JSON.stringify(root + "/src")});\n`;
 async function server(t, plan = []) {
   const calls = [];
   const service = http.createServer(async (req, res) => {
@@ -144,6 +144,27 @@ test("each has one test identity, different histories; retries retain their hist
   assert.equal(retries.length, 2);
   assert.equal(retries[0].historyId, retries[1].historyId);
 });
+test("non-finite numeric datasets retain distinct parameters and history", async (t) => {
+  const result = await run(t, {
+    "numbers.test.cjs": api + `
+      doqa.test.each([[NaN], [Infinity], [-Infinity], [null], [0], ["NaN"]])(
+        'number %s', {id:'NUMBERS'}, value => {
+          doqa.parameter('runtime', value);
+          expect(true).toBe(true);
+        });
+    `,
+  });
+  assert.equal(result.code, 0, result.output);
+  assert.equal(result.results.length, 6);
+  assert.equal(new Set(result.results.map(r => r.historyId)).size, 6);
+  const parameters = result.results.map(r => r.parameters.find(p => p.name === 'arg0').value);
+  assert.deepEqual(parameters.sort(), ['NaN', 'Infinity', '-Infinity', 'null', '0', '"NaN"'].sort());
+  for (const row of result.results) {
+    const value = row.parameters.find(p => p.name === 'arg0').value;
+    assert.equal(row.parameters.find(p => p.name === 'runtime').value, value === '"NaN"' ? 'NaN' : value);
+  }
+});
+
 test("concurrent and worker contexts cannot share steps or parameters", async (t) => {
   const source =
     api +
@@ -241,7 +262,7 @@ test("network failure preserves Jest status and local recovery data", async (t) 
 });
 test("ESM test imports typed package exports", async (t) => {
   const result = await run(t, {
-    "esm.test.mjs": `import {doqa} from ${JSON.stringify(root + "/dist/index.mjs")};doqa.test('esm',{id:'ESM'},()=>doqa.step('once',()=>{}));`,
+    "esm.test.mjs": `import {doqa} from ${JSON.stringify(root + "/src/index.mjs")};doqa.test('esm',{id:'ESM'},()=>doqa.step('once',()=>{}));`,
   });
   assert.equal(result.code, 0, result.output);
   assert.equal(result.results[0].steps.length, 1);
@@ -391,7 +412,7 @@ test("custom environment keeps its event handler", async (t) => {
   const result = await run(
     t,
     {
-      "custom.cjs": `const {TestEnvironment}=require(${JSON.stringify(require.resolve("jest-environment-node"))});const {wrapEnvironment}=require(${JSON.stringify(root + "/dist")});class Custom extends TestEnvironment {async setup(){await super.setup();this.global.customEvents=0;} handleTestEvent(e){if(e.name==='test_start')this.global.customEvents++;}}module.exports=wrapEnvironment(Custom);`,
+      "custom.cjs": `const {TestEnvironment}=require(${JSON.stringify(require.resolve("jest-environment-node"))});const {wrapEnvironment}=require(${JSON.stringify(root + "/src")});class Custom extends TestEnvironment {async setup(){await super.setup();this.global.customEvents=0;} handleTestEvent(e){if(e.name==='test_start')this.global.customEvents++;}}module.exports=wrapEnvironment(Custom);`,
       "custom.test.cjs":
         api +
         `doqa.test('custom',{id:'CUSTOM'},()=>expect(customEvents).toBe(1));`,

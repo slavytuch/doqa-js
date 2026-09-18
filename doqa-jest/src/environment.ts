@@ -11,11 +11,12 @@ import type {
   Options,
   Step,
 } from "./types";
-import { Runtime } from "doqa-js-commons-dev";
+import { Runtime } from "../../doqa-js-commons/src/index";
 import { bridgeKey, metadataKey, templateKey } from "./bridge";
 import { resolveConfig } from "./config";
-import { prepareSession } from "doqa-js-commons-dev/session";
-import { atomic, hash, warn } from "doqa-js-commons-dev";
+import { serializeParameter } from "./parameter";
+import { prepareSession } from "../../doqa-js-commons/src/session";
+import { atomic, hash, warn } from "../../doqa-js-commons/src/index";
 
 type EnvironmentConstructor = new (
   config: JestEnvironmentConfig,
@@ -238,7 +239,7 @@ export function wrapEnvironment(
           fn.doqaParameters = (Array.isArray(row) ? row : [row]).map(
             (v, i) => ({
               name: `arg${i}`,
-              value: JSON.stringify(v) ?? String(v),
+              value: serializeParameter(v),
             }),
           );
         }

@@ -1,7 +1,7 @@
 # DoQA JavaScript adapter commons
 
-Модуль `doqa-js-commons`, npm-пакет разработки `doqa-js-commons-dev`.
-Зависит от `doqa-js-client-dev`; зависимостей и глобальных объектов Jest не требует.
+Модуль `doqa-js-commons`, часть единого npm-пакета `doqa-js-dev` с импортом `doqa-js-dev/commons`.
+Использует встроенный client; зависимостей и глобальных объектов Jest не требует.
 
 - `resolveConfig`, `Options`, `Config`: настройки и приоритет options → DOQA_* → properties.
 - `RecordResult`, `Step`, `Metadata`: общий контракт результатов, шагов и вложений.
@@ -16,7 +16,7 @@ HTTP-компоненты вынесены в отдельные exports: имп
 не загружает HTTP-клиент в тестовый VM-контекст jsdom.
 
 ```js
-const { Coordinator } = require('doqa-js-commons-dev/coordinator');
+const { Coordinator } = require('doqa-js-dev/commons/coordinator');
 const coordinator = new Coordinator(
   { reporting: 'files', sessionDir: '.doqa/example', resultsDir: 'results' },
   { name: 'example-runner', language: 'javascript', displayName: 'Example runner' },
@@ -30,4 +30,4 @@ const coordinator = new Coordinator(
 статусов ошибок, правил выбора и порядка тестов остаётся в самом адаптере.
 
 Node.js 22/24, CJS/ESM и типы TypeScript. Сборка и тесты из корня `doqa-js`:
-`npm run build`, затем `npm run test --workspace doqa-js-commons`.
+`npm run build`, затем `node --test doqa-js-commons/tests/*.test.cjs`.
